@@ -3,41 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savings System v9.0 - Elena</title>
+    <title>Savings System Cloud - Elena</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #000; --card: #0a0a0a; --accent: #fff; --gray: #444; --red: #ff3b3b; --green: #00ff88; --gold: #ffd700; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding: 20px 10px; }
         .app { max-width: 450px; margin: 0 auto; text-align: center; }
-
         .main-display { background: var(--card); border: 1px solid #1a1a1a; padding: 30px 20px; border-radius: 20px; margin-bottom: 15px; }
         .days-left { font-size: 5.5rem; font-weight: 900; letter-spacing: -4px; line-height: 1; display: block; }
         .label { font-size: 0.6rem; color: var(--gray); text-transform: uppercase; letter-spacing: 2px; display: block; }
-        
         .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .flow-card { background: #070707; border: 1px solid #111; padding: 15px; border-radius: 12px; text-align: left; }
         .flow-val { display: block; font-size: 0.9rem; font-weight: 600; margin-top: 5px; }
-
         .milestone-box { background: #0a0a0a; border: 1px solid #222; padding: 20px; border-radius: 15px; margin-bottom: 25px; border-left: 4px solid var(--gold); text-align: left; }
         .progress-container { width: 100%; height: 4px; background: #111; margin: 15px 0; border-radius: 10px; overflow: hidden; }
         .progress-bar { height: 100%; background: linear-gradient(90deg, #fff, var(--green), #fff); background-size: 200% 100%; animation: shine 3s infinite; width: 0%; transition: 2s ease; }
         @keyframes shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        /* Estilos de la Tabla */
-        .table-container { background: var(--card); border: 1px solid #1a1a1a; border-radius: 15px; overflow: hidden; margin-top: 10px; }
+        .table-container { background: var(--card); border: 1px solid #1a1a1a; border-radius: 15px; overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
-        th { background: #111; color: var(--gray); padding: 12px 15px; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 1px; }
+        th { background: #111; color: var(--gray); padding: 12px 15px; text-transform: uppercase; font-size: 0.6rem; }
         td { padding: 12px 15px; border-bottom: 1px solid #111; }
-        .monto-celda { font-weight: 600; text-align: right; }
-        .row-diario { color: #fff; }
-        .row-mensual { color: var(--green); font-weight: 700; }
-        .row-gasto { color: var(--red); }
-
         .btn-add { background: #fff; color: #000; border: none; width: 100%; padding: 18px; border-radius: 50px; font-weight: 900; text-transform: uppercase; cursor: pointer; margin-bottom: 30px; font-size: 0.75rem; }
-
-        /* Modal e Hitos */
         #hitoOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .hito-card { padding: 40px; border-radius: 30px; border: 2px solid var(--gold); background: #000; animation: pop 0.4s ease; }
-        @keyframes pop { from { transform: scale(0.8); } to { transform: scale(1); } }
+        .hito-card { padding: 40px; border-radius: 30px; border: 2px solid var(--gold); background: #000; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; align-items: center; justify-content: center; }
         .modal-content { width: 85%; max-width: 350px; background: #0a0a0a; padding: 30px; border: 1px solid #222; border-radius: 20px; }
         input, select { width: 100%; background: #111; border: 1px solid #222; color: #fff; padding: 15px; margin: 10px 0 20px; border-radius: 10px; box-sizing: border-box; }
@@ -49,7 +38,7 @@
     <div class="hito-card">
         <div style="font-size: 4rem;">🏆</div>
         <h2 style="color: var(--gold);">¡Hito Alcanzado!</h2>
-        <p id="hitoDesc"></p>
+        <p id="hitoDesc" style="color: white;"></p>
         <button onclick="cerrarHito()" style="background: var(--gold); border: none; padding: 10px 25px; border-radius: 20px; font-weight: 900; cursor: pointer;">CONTINUAR</button>
     </div>
 </div>
@@ -73,7 +62,7 @@
     </div>
 
     <div class="milestone-box">
-        <span id="motiText" style="display: block; font-size: 0.65rem; color: #666; margin-bottom: 10px; font-style: italic;">¡Vamos Elena!</span>
+        <span id="motiText" style="display: block; font-size: 0.65rem; color: #666; margin-bottom: 10px; font-style: italic;">Sincronizado con la Nube</span>
         <span class="label" style="color: var(--gold)">Siguiente Hito</span>
         <div style="font-size: 1.2rem; font-weight: 800; margin-top: 5px;" id="nextHitoVal">--</div>
         <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
@@ -86,16 +75,11 @@
     <button class="btn-add" onclick="openM()">+ Registrar Ahorro</button>
 
     <div style="text-align: left;">
-        <span class="label">Historial Detallado</span>
+        <span class="label">Historial en Tiempo Real</span>
         <div class="table-container">
             <table>
                 <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th style="text-align:right">Monto</th>
-                        <th></th>
-                    </tr>
+                    <tr><th>Fecha</th><th>Tipo</th><th style="text-align:right">Monto</th><th></th></tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
@@ -113,40 +97,55 @@
             <option value="Gasto">Gasto (-)</option>
         </select>
         <input type="number" id="fMonto" placeholder="Monto Gs.">
-        <button onclick="save()" style="width: 100%; background: #fff; color: #000; padding: 15px; border: none; font-weight: 900; border-radius: 10px; cursor: pointer;">CONFIRMAR</button>
+        <button onclick="save()" style="width: 100%; background: #fff; color: #000; padding: 15px; border: none; font-weight: 900; border-radius: 10px; cursor: pointer;">CONFIRMAR CLOUD</button>
         <button onclick="closeM()" style="background:none; border:none; color:#444; margin-top:15px; width:100%; font-size:0.6rem;">CERRAR</button>
     </div>
 </div>
 
 <script>
+    // CONFIGURACIÓN DE ELENA - USANDO TUS DATOS DE LA CAPTURA
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNyG8GCioQhnTMkFR8kj2lp5npCh5JluQ",
+      authDomain: "mis-ahorros26.firebaseapp.com",
+      databaseURL: "https://mis-ahorros26-default-rtdb.firebaseio.com",
+      projectId: "mis-ahorros26",
+      storageBucket: "mis-ahorros26.firebasestorage.app",
+      messagingSenderId: "64957921978",
+      appId: "1:64957921978:web:f7e872410b67b04fb9e083",
+      measurementId: "G-DZG7SSFB62"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const dataRef = db.ref('ahorros_elena');
+
     const META_FINAL = 10500000;
     const HITOS = [500000, 1000000, 2500000, 5000000, 7500000, 9000000, 10500000];
     const FECHA_META = new Date('2026-09-30T23:59:59');
-    let db = JSON.parse(localStorage.getItem('elena_v9_db')) || [];
 
-    const frases = ["¡Excelente Elena!", "Paso a paso hacia los 10.5M.", "Ingeniería y ahorro.", "¡Seguí así!"];
+    // Escuchar cambios en la nube en tiempo real
+    dataRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        let listado = [];
+        if (val) {
+            listado = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+        }
+        render(listado);
+    });
 
     function getDias() {
         const diff = FECHA_META.getTime() - new Date().getTime();
         return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }
 
-    function refresh(nuevo = 0) {
-        const total = db.reduce((s, r) => s + r.monto, 0);
-        const ingresos = db.filter(r => r.monto > 0).reduce((s, r) => s + r.monto, 0);
-        const gastos = db.filter(r => r.monto < 0).reduce((s, r) => s + Math.abs(r.monto), 0);
+    function render(datos) {
+        const total = datos.reduce((s, r) => s + parseFloat(r.monto), 0);
+        const ingresos = datos.filter(r => r.monto > 0).reduce((s, r) => s + parseFloat(r.monto), 0);
+        const gastos = datos.filter(r => r.monto < 0).reduce((s, r) => s + Math.abs(r.monto), 0);
         
         const hito = HITOS.find(h => h > total) || META_FINAL;
         const faltante = META_FINAL - total;
         const porc = (total / META_FINAL) * 100;
-
-        if (nuevo > 0) {
-            const hitoAlcanzado = HITOS.find(h => total >= h && (total - nuevo) < h);
-            if (hitoAlcanzado) {
-                document.getElementById('hitoDesc').innerText = `¡Superaste los ${hitoAlcanzado.toLocaleString('es-PY')} Gs.!`;
-                document.getElementById('hitoOverlay').style.display = 'flex';
-            }
-        }
 
         document.getElementById('daysDisp').innerText = getDias();
         document.getElementById('totalIngresos').innerText = ingresos.toLocaleString('es-PY') + " Gs.";
@@ -158,22 +157,17 @@
 
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
-        db.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach((r, i) => {
-            let clase = r.monto < 0 ? 'row-gasto' : (r.tipo === 'Ahorro Mensual' ? 'row-mensual' : 'row-diario');
+        datos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach((r) => {
+            let clase = r.monto < 0 ? 'row-gasto' : (r.tipo === 'Ahorro Mensual' ? 'style="color:var(--green); font-weight:bold;"' : 'style="color:#fff"');
             tbody.innerHTML += `
-                <tr class="${clase}">
+                <tr ${clase}>
                     <td>${new Date(r.fecha + "T12:00:00").toLocaleDateString('es-PY', {day:'2-digit', month:'2-digit'})}</td>
                     <td>${r.tipo.replace('Ahorro ', '')}</td>
-                    <td class="monto-celda">${r.monto.toLocaleString('es-PY')}</td>
-                    <td><button onclick="del(${i})" style="background:none; border:none; color:#333; cursor:pointer;">×</button></td>
+                    <td style="text-align:right">${parseFloat(r.monto).toLocaleString('es-PY')}</td>
+                    <td><button onclick="del('${r.id}')" style="background:none; border:none; color:#333; cursor:pointer;">×</button></td>
                 </tr>`;
         });
-        localStorage.setItem('elena_v9_db', JSON.stringify(db));
     }
-
-    function cerrarHito() { document.getElementById('hitoOverlay').style.display = 'none'; }
-    function openM() { document.getElementById('modal').style.display = 'flex'; }
-    function closeM() { document.getElementById('modal').style.display = 'none'; }
 
     function save() {
         const f = document.getElementById('fFecha').value;
@@ -181,16 +175,17 @@
         let m = parseFloat(document.getElementById('fMonto').value);
         if (f && !isNaN(m)) {
             if (t === "Gasto") m = -Math.abs(m);
-            db.push({ fecha: f, tipo: t, monto: m });
-            document.getElementById('motiText').innerText = frases[Math.floor(Math.random()*frases.length)];
+            dataRef.push({ fecha: f, tipo: t, monto: m }); // Guardar en la NUBE
             document.getElementById('fMonto').value = "";
-            closeM(); refresh(m);
+            closeM();
         }
     }
 
-    function del(i) { if(confirm("¿Eliminar?")) { db.splice(i, 1); refresh(); } }
+    function del(id) { if(confirm("¿Eliminar de la nube?")) { dataRef.child(id).remove(); } }
+    function openM() { document.getElementById('modal').style.display = 'flex'; }
+    function closeM() { document.getElementById('modal').style.display = 'none'; }
+    function cerrarHito() { document.getElementById('hitoOverlay').style.display = 'none'; }
     document.getElementById('fFecha').valueAsDate = new Date();
-    refresh();
 </script>
 </body>
 </html>
